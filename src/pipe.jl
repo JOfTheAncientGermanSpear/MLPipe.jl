@@ -250,9 +250,20 @@ function MLBase.f1score{T}(y_true::AbstractVector{T}, y_pred::AbstractVector{T})
 end
 
 
+isCategorical{T <: AbstractString}(arr::AbstractArray{T}) = true
+isCategorical(arr) = false
+
+encodeCategorical(arr) = @> arr labelmap labelencode(arr)
+
 function calcCorrelations(dataf::DataFrame, predictors::Vector{Symbol}, prediction::Symbol)
+  preds = if isCategorical(dataf[prediction])
+    encodeCategorical(dataf[prediction])
+  else
+    dataf[prediction]
+  end
+
   @>> predictors begin
-    map(p -> cor(dataf[p], dataf[prediction]))
+    map(p -> cor(dataf[p], preds))
     cors -> DataFrame(predictor = predictors, cor = cors[:])
     sort(cols=[:cor])
   end
