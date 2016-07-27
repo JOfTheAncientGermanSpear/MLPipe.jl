@@ -29,6 +29,9 @@ export recallScore
 export f1score
 
 
+export encodeCategorical
+
+
 include("pipe.jl")
 
 end
