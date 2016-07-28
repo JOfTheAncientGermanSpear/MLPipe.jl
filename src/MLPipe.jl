@@ -19,6 +19,7 @@ export calcTrainTestScores
 
 
 export evalModel
+export meanTrainTest
 export plotEvalModel
 export calcCorrelations
 
@@ -30,6 +31,10 @@ export f1score
 
 
 export encodeCategorical
+
+export calcAnova
+export calcCorrelations
+export tukey
 
 
 include("pipe.jl")

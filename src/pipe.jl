@@ -3,6 +3,9 @@ using Gadfly
 using Lazy
 using MLBase
 
+include("./anova/anova.jl")
+include("./anova/posthoc.jl")
+
 typealias Functions Vector{Function}
 
 type Pipeline
@@ -255,15 +258,27 @@ isCategorical(arr) = false
 
 encodeCategorical(arr) = @> arr labelmap labelencode(arr)
 
-function calcCorrelations(dataf::DataFrame, predictors::Vector{Symbol}, prediction::Symbol)
-  preds = if isCategorical(dataf[prediction])
-    encodeCategorical(dataf[prediction])
-  else
-    dataf[prediction]
+
+function calcAnova(dataf::DataFrame,
+  predictors::Vector{Symbol},
+  prediction::Symbol)
+
+  preds = dataf[prediction]
+  reduce(Dict{Symbol, AnovaInfo}(), predictors) do ret, p
+    genDataGroup(label) = @> dataf[preds .== label, p] DataGroup(label)
+
+    datagroups = @>> preds unique map(genDataGroup)
+    ret[p] = calcanova(datagroups...)
+    ret
   end
+end
+
+function calcCorrelations(dataf::DataFrame,
+  predictors::Vector{Symbol},
+  prediction::Symbol)
 
   @>> predictors begin
-    map(p -> cor(dataf[p], preds))
+    map(p -> cor(dataf[p], dataf[prediction]))
     cors -> DataFrame(predictor = predictors, cor = cors[:])
     sort(cols=[:cor])
   end
