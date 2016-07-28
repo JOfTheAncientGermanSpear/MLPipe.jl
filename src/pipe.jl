@@ -1,7 +1,7 @@
 using DataFrames
-using Gadfly
 using Lazy
 using MLBase
+using Plots
 
 include("./anova/anova.jl")
 include("./anova/posthoc.jl")
@@ -180,10 +180,11 @@ function plotEvalModel(train_scores, test_scores, labels)
     color = eval(parse("colorant\"$clr\""))
     layer(y = scores, x = labels, Geom.point, Theme(default_color=color))
   end
-  plot(mkLayer(train_scores, "deepskyblue"),
-       mkLayer(test_scores, "green"),
-       Guide.xlabel("Model State"),
-       Guide.ylabel("Score"))
+  scatter(train_scores, label="train scores",
+    xticks = (1:length(labels), labels),
+    xrotation = rad2deg(pi/3)
+  )
+  scatter!(test_scores, label="test scores")
 end
 
 typealias Scores Vector{Float64}

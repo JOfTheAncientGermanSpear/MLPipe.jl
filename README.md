@@ -27,13 +27,15 @@ View [Iris Example notebook](https://github.com/JOfTheAncientGermanSpear/MLPipe.
 
 * [DataFrames][1]
 * [Distributions][2]
-* [Gadfly][3]
-* [HypothesisTests][4]
-* [Lazy][5]
+* [HypothesisTests][3]
+* [Lazy][4]
+* [Plots][5]
+* [PyPlot][6]
 
 
 [1]: https://github.com/JuliaStats/DataFrames.jl
 [2]: https://github.com/JuliaStats/Distributions.jl
-[3]: https://github.com/dcjones/Gadfly.jl
-[4]: https://github.com/JuliaStats/HypothesisTests.jl
-[5]: https://github.com/MikeInnes/Lazy.jl
+[3]: https://github.com/JuliaStats/HypothesisTests.jl
+[4]: https://github.com/MikeInnes/Lazy.jl
+[5]: https://github.com/tbreloff/Plots.jl
+[6]: http://github.com/stevengj/PyPlot.jl
