@@ -13,7 +13,7 @@ _Why_
 __Warning: Not Optimized__
 
 * This code is not a registered package
-  * Install command: 
+  * Install command:
   * Pkg.clone("https://github.com/JOfTheAncientGermanSpear/MLPipe.jl.git
 ")
 * If you find bugs or have optimization suggestions, please feel free to contribute a fix or let us know.
@@ -29,7 +29,7 @@ View [Iris Example notebook](https://github.com/JOfTheAncientGermanSpear/MLPipe.
 * [Distributions][2]
 * [HypothesisTests][3]
 * [Lazy][4]
-* [Plots][5]
+* [Gadfly][5]
 * [PyPlot][6]
 
 
@@ -37,5 +37,5 @@ View [Iris Example notebook](https://github.com/JOfTheAncientGermanSpear/MLPipe.
 [2]: https://github.com/JuliaStats/Distributions.jl
 [3]: https://github.com/JuliaStats/HypothesisTests.jl
 [4]: https://github.com/MikeInnes/Lazy.jl
-[5]: https://github.com/tbreloff/Plots.jl
+[5]: https://github.com/dcjones/Gadfly.jl
 [6]: http://github.com/stevengj/PyPlot.jl
