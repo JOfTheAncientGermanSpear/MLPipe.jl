@@ -21,6 +21,8 @@ export calcTrainTestScores
 export evalModel
 export evalModelParallel
 export meanTrainTest
+export Combos
+export ModelState
 export stateCombos
 export plotEvalModel
 export calcCorrelations

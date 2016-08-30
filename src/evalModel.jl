@@ -1,8 +1,8 @@
-@everywhere using MLBase
+using MLBase
 
-@everywhere include("pipe.jl")
+include("pipe.jl")
 
-@everywhere function trainTestPreds(pipe::Pipeline, cvg::CrossValGenerator)
+function trainTestPreds(pipe::Pipeline, cvg::CrossValGenerator)
   num_iterations = length(cvg)
   num_samples = length(pipe.truths)
 
@@ -67,7 +67,7 @@ meanTrainTest{T <: AbstractVector}(train::T, test::T) = mean(train), mean(test)
 doNothing(train_scores::Vector, test_scores::Vector, preds::Vector, combo_ix::Int64) = ()
 
 
-@everywhere function evalModel(pipe::Pipeline, cvg::CrossValGenerator,
+function evalModel(pipe::Pipeline, cvg::CrossValGenerator,
     on_combo_complete::Function=doNothing,
     states...)
   state_combos::Combos = stateCombos(states...)
@@ -75,7 +75,7 @@ doNothing(train_scores::Vector, test_scores::Vector, preds::Vector, combo_ix::In
 end
 
 
-@everywhere function evalModel(pipe::Pipeline, cvg::CrossValGenerator,
+function evalModel(pipe::Pipeline, cvg::CrossValGenerator,
     state_combos::Combos;
     on_combo_complete::Function=doNothing)
 
@@ -93,24 +93,6 @@ end
   test_scores = Float64[t[2] for t in scores]
 
   train_scores, test_scores, state_combos
-end
-
-
-function evalModelParallel(X, y, pipe_factory::Function, cvg_factory::Function,
-    state_combos::Combos;
-    on_combo_complete::Function=doNothing)
-
-  scores = pmap(state_combos) do c
-    trains, tests, model = evalModel(pipe_factory(X, y), cvg_factory(y), [c],
-      on_combo_complete=on_combo_complete)
-    trains[1], tests[1], model[1]
-  end
-
-  train_scores = Float64[s[1] for s in scores]
-  test_scores = Float64[s[2] for s in scores]
-  combos = ModelState[s[3] for s in scores]
-
-  train_scores, test_scores, combos
 end
 
 
