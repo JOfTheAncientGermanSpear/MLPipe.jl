@@ -82,7 +82,7 @@ pipeFit!(pipe::Pipeline, x_ixs::IXs, y_ixs::IXs, stop_fn::Int64) = _runFns(
 
 pipePredict(pipe::Pipeline, ixs::IXs) = _runFns(pipe, :predicts, ixs)
 pipePredict(pipe, ixs::IXs, stop_fn::Int64) = _runFns(
-  pipe, :predicts, x_ixs, y_ixs, stop_fn)
+  pipe, :predicts, ixs, stop_fn)
 
 pipePredict(pipe::Pipeline, x_ixs::IXs, y_ixs::IXs) = _runFns(
   pipe, :predicts, x_ixs, y_ixs)
@@ -100,98 +100,6 @@ function pipeTest(pipe::Pipeline, x_ixs::IXs, y_ixs::IXs)
   truths = pipe.truths[x_ixs]
   preds = pipePredict(pipe, x_ixs, y_ixs)
   pipe.score_fn(truths, preds)
-end
-
-
-function calcTrainTestScores(pipe::Pipeline, cvg::CrossValGenerator,
-    num_samples::Int64)
-
-  num_iterations = length(cvg)
-
-  train_scores = zeros(Float64, num_iterations)
-  fit_call = 0
-
-  function fit(ixs::IXs)
-    fit_call += 1
-    pipeFit!(pipe, ixs)
-    train_scores[fit_call] = pipeTest(pipe, ixs)
-  end
-
-  test(_, ixs::IXs) = pipeTest(pipe, ixs)
-
-  test_scores = cross_validate(fit, test, num_samples, cvg)
-  train_scores, test_scores
-end
-
-typealias EvalInput{T <: AbstractVector} Pair{Symbol, T}
-typealias Combos Vector{ModelState}
-function _evalInputToModelStates(ei...)
-
-  #enumerate hack to keep ordering
-  need_splits::Vector{Int64} = @>> enumerate(ei) begin
-    filter( ix_fv::Tuple{Int64, EvalInput} -> length(ix_fv[2][2]) > 1)
-    map( ix_fv -> ix_fv[1])
-  end
-
-  if length(need_splits) == 0
-    ms::ModelState = ModelState([k => v[1] for (k, v) in ei])
-    Combos([ms])
-  else
-    ret = Combos()
-
-    ix::Int64 = need_splits[1]
-    f::Symbol, vs::AbstractVector = ei[ix]
-    for v in vs
-      remaining::Vector{EvalInput} = begin
-        r = EvalInput[l for l in copy(ei)]
-        r[ix] = f => [v]
-        r
-      end
-
-      ret =[ret; _evalInputToModelStates(remaining...)]
-    end
-
-    ret
-  end
-end
-
-
-function meanTrainTest{T <: AbstractVector}(train_test::Tuple{T, T})
-  (mean(train_test[1]), mean(train_test[2]))
-end
-
-
-function evalModel(pipe::Pipeline, cvg::CrossValGenerator, num_samples::Int64,
-    agg::Function=meanTrainTest, states...)
-
-  all_combos::Combos = _evalInputToModelStates(states...)
-
-  scores = map(all_combos) do combo::ModelState
-    modelState!(pipe, combo)
-    calcTrainTestScores(pipe, cvg, num_samples) |> agg
-  end
-
-  Float64[t[1] for t in scores], Float64[t[2] for t in scores], all_combos
-end
-
-
-function plotEvalModel(train_scores, test_scores, labels)
-  function mkLayer(scores, clr)
-    color = eval(parse("colorant\"$clr\""))
-    layer(y = scores, x = labels, Geom.point, Theme(default_color=color))
-  end
-  plot(mkLayer(train_scores, "deepskyblue"),
-       mkLayer(test_scores, "green"),
-       Guide.xlabel("Model State"),
-       Guide.ylabel("Score"))
-end
-
-typealias Scores Vector{Float64}
-function plotEvalModel{T}(modelEval::Tuple{Scores, Scores, Vector{T}})
-  mkLabel(p::ParamState) = "$(p[1]): $(p[2])"
-  mkLabel(m::ModelState) = join(map(mkLabel, m), "; ")
-  labels = map(mkLabel, modelEval[3])
-  plotEvalModel(modelEval[1], modelEval[2], labels)
 end
 
 
@@ -253,10 +161,16 @@ function MLBase.f1score{T}(y_true::AbstractVector{T}, y_pred::AbstractVector{T})
 end
 
 
+function accuracy{T <: Real}(y_true::AbstractVector{T}, y_pred::AbstractVector{T})
+  @assert length(y_true) == length(y_pred)
+  sum(y_true .== y_pred)/length(y_true)
+end
+
+
 isCategorical{T <: AbstractString}(arr::AbstractArray{T}) = true
 isCategorical(arr) = false
 
-encodeCategorical(arr) = @> arr labelmap labelencode(arr)
+encodeCategorical(arr) = labelencode(labelmap(arr), arr)
 
 
 function calcAnova(dataf::DataFrame,
@@ -265,21 +179,18 @@ function calcAnova(dataf::DataFrame,
 
   preds = dataf[prediction]
   reduce(Dict{Symbol, AnovaInfo}(), predictors) do ret, p
-    genDataGroup(label) = @> dataf[preds .== label, p] DataGroup(label)
+    genDataGroup(label) = DataGroup(dataf[preds .== label, p], label)
 
-    datagroups = @>> preds unique map(genDataGroup)
+    datagroups = map(genDataGroup, preds |> unique)
     ret[p] = calcanova(datagroups...)
     ret
   end
 end
 
-function calcCorrelations(dataf::DataFrame,
-  predictors::Vector{Symbol},
+function calcCorrelations(dataf::DataFrame, predictors::Vector{Symbol},
   prediction::Symbol)
 
-  @>> predictors begin
-    map(p -> cor(dataf[p], dataf[prediction]))
-    cors -> DataFrame(predictor = predictors, cor = cors[:])
-    sort(cols=[:cor])
-  end
+  cors = map(p -> cor(dataf[p], dataf[prediction]), predictors)
+  ret = DataFrame(predictor = predictors, cor = cors[:])
+  sort(ret, cols=[:cor])
 end

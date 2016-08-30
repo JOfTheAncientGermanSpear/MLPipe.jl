@@ -19,7 +19,9 @@ export calcTrainTestScores
 
 
 export evalModel
+export evalModelParallel
 export meanTrainTest
+export stateCombos
 export plotEvalModel
 export calcCorrelations
 
@@ -38,5 +40,6 @@ export tukey
 
 
 include("pipe.jl")
+include("evalModel.jl")
 
 end
