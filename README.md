@@ -7,6 +7,7 @@ _Why_
 
 * Want a way to quickly explore __small__ datasets like those typically found in medical labs
 * Prefer to use Julia instead of other languages
+* Inspired by [scikit-learn's Pipeline class][7] and [Grid Seach][8]
 
 
 
@@ -21,6 +22,8 @@ __Warning: Not Optimized__
 
 ##How To Use
 View [Iris Example notebook](https://github.com/JOfTheAncientGermanSpear/MLPipe.jl/blob/master/Iris_Example.ipynb)
+
+View [Parallel Example](https://github.com/JOfTheAncientGermanSpear/MLPipe.jl/blob/master/src/parallelExample.jl)
 
 
 ##Required Packages
@@ -39,3 +42,5 @@ View [Iris Example notebook](https://github.com/JOfTheAncientGermanSpear/MLPipe.
 [4]: https://github.com/MikeInnes/Lazy.jl
 [5]: https://github.com/dcjones/Gadfly.jl
 [6]: http://github.com/stevengj/PyPlot.jl
+[7]: http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html
+[8]: http://scikit-learn.org/stable/modules/generated/sklearn.grid_search.GridSearchCV.html
