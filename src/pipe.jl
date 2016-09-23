@@ -23,6 +23,19 @@ type Pipeline
 end
 
 
+typealias ParamState{T <: Any} Pair{Symbol, T}
+typealias ModelState Dict{Symbol, Any}
+paramState!(pipe::Pipeline, p::ParamState) = pipe.param_state!(p)
+modelState!(pipe::Pipeline, m::ModelState) = for p in m
+  paramState!(pipe, p)
+end
+
+paramState(pipe::Pipeline, s::Symbol) = pipe.param_state(s)
+modelState(pipe::Pipeline, ps::Vector{Symbol}) = ParamState[
+                                                  p => paramState(pipe, p)
+                                                  for p in ps]
+
+
 function Pipeline{T <: Any}(fits::Functions, predicts::Functions,
                   score_fn::Function, truths::AbstractVector,
                   model_state::Dict{Symbol, T})
@@ -38,16 +51,16 @@ end
 typealias IXs AbstractVector{Int64}
 
 _runFns(p::Pipeline, f::Symbol, ixs::IXs, stop_fn::Int64) = foldl(
-  ixs, p.(f)[1:stop_fn]) do prev_out, fn::Function
+  ixs, getfield(p, f)[1:stop_fn]) do prev_out, fn::Function
     fn(prev_out)
 end
 
 _runFns(p::Pipeline, f::Symbol, ixs::IXs) = _runFns(
-  p, f, ixs, length(p.(f)))
+  p, f, ixs, length(getfield(p, f)))
 
 
 function _runFns(p::Pipeline, f::Symbol, x_ixs::IXs, y_ixs::IXs, stop_fn::Int64)
-  fs = p.(f)
+  fs = getfield(p, f)
   first_out = fs[1](x_ixs, y_ixs=y_ixs)
   foldl( first_out, fs[2:stop_fn]) do prev_out, fn::Function
     fn(prev_out)
@@ -56,17 +69,6 @@ end
 
 _runFns(p::Pipeline, f::Symbol, x_ixs::IXs, y_ixs::IXs) = _runFns(
   p, f, x_ixs, y_ixs, p.(f) |> length)
-
-
-typealias ParamState{T <: Any} Pair{Symbol, T}
-typealias ModelState Dict{Symbol, Any}
-paramState!(pipe::Pipeline, p::ParamState) = pipe.param_state!(p)
-modelState!(pipe::Pipeline, m::ModelState) = map(p -> paramState!(pipe, p), m)
-
-paramState(pipe::Pipeline, s::Symbol) = pipe.param_state(s)
-modelState(pipe::Pipeline, ps::Vector{Symbol}) = ParamState[
-                                                  p => paramState(pipe, p)
-                                                  for p in ps]
 
 
 pipeFit!(pipe::Pipeline, ixs::IXs) = _runFns(pipe, :fits, ixs)

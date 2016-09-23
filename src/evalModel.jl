@@ -1,7 +1,5 @@
 using MLBase
 
-include("pipe.jl")
-
 function trainTestPreds(pipe::Pipeline, cvg::CrossValGenerator)
   num_iterations = length(cvg)
   num_samples = length(pipe.truths)
@@ -39,7 +37,7 @@ function stateCombos(ei...)
   end
 
   if length(need_splits) == 0
-    ms::ModelState = ModelState([k => v[1] for (k, v) in ei])
+    ms::ModelState = ModelState(k => v[1] for (k, v) in ei)
     Combos([ms])
   else
     ret = Combos()
@@ -48,7 +46,7 @@ function stateCombos(ei...)
     f::Symbol, vs::AbstractVector = ei[ix]
     for v in vs
       remaining::Vector{EvalInput} = begin
-        r = EvalInput[l for l in copy(ei)]
+        r = EvalInput[l for l in identity(ei)]
         r[ix] = f => [v]
         r
       end

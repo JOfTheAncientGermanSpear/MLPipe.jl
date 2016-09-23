@@ -27,15 +27,10 @@ function DataGroup(data::AbstractVector, label::Union{AbstractString, Symbol})
 end
 
 
-mapGen{T}(datagroups::Vector{T}) = fn::Function -> map(fn, datagroups)
+pluckGen{T}(vec::Vector{T}) = f::Symbol -> map(d -> getfield(d, f), vec)
 
-pluckGen{T}(datagroups::Vector{T}) = begin
-  map = mapGen(datagroups)
-  field::Symbol-> @> d->d.(field) map
-end
-
-sumOverGen{T}(datagroups::Vector{T}) = begin
-  pluck = pluckGen(datagroups)
+function sumOverGen{T}(vec::Vector{T})
+  pluck = pluckGen(vec)
   field::Symbol -> @> field pluck sum
 end
 
@@ -76,7 +71,6 @@ Base.show(io::IO, ai::AnovaInfo) = begin
 end
 
 function calcanova(datagroups::AbstractVector{DataGroup})
-  map = mapGen(datagroups)
   pluck = pluckGen(datagroups)
   sumOver = sumOverGen(datagroups)
 
@@ -88,11 +82,15 @@ function calcanova(datagroups::AbstractVector{DataGroup})
   ms_within::Float64 = ss_within/df_within
 
   dataMean::Float64 = (@> :weighted_mean sumOver)/dataCount
-  ss_between::Float64 = @> d->d.sample_size*(d.sample_mean - dataMean)^2 map sum
+  ss_between::Float64 = reduce(0., datagroups) do acc, d
+    acc + d.sample_size*(d.sample_mean - dataMean)^2
+  end
   df_between::Int64 = groupCount - 1
   ms_between::Float64 = ss_between/df_between
 
-  ss_total::Float64 = @> d->sum((d.data - dataMean).^2) map sum
+  ss_total::Float64 = reduce(0., datagroups) do acc, d
+    acc + sum((d.data - dataMean).^2)
+  end
   df_total::Int64 = dataCount - 1
   msTotal::Float64 = ss_total/df_total
 
