@@ -77,7 +77,7 @@ function evalModel(pipe::Pipeline, cvg::CrossValGenerator,
     state_combos::Combos;
     on_combo_complete::Function=doNothing)
 
-  scores::Vector{Tuple} = map(state_combos |> enumerate) do comboix_combo
+  scores::Vector{Tuple{Float64, Float64}} = map(state_combos |> enumerate) do comboix_combo
     combo_ix::Int64, combo::ModelState = comboix_combo
     modelState!(pipe, combo)
     train_scores, test_scores, preds = trainTestPreds(pipe, cvg)
