@@ -1,26 +1,26 @@
-using MLBase
-using Lazy
-using PyCall
-using RDatasets
+@everywhere using MLBase
+@everywhere using Lazy
+@everywhere using PyCall
+@everywhere using RDatasets
 
-using MLPipe
+@everywhere using MLPipe
 
 #julia -p 3
-#julia> @everywhere include("parallelExample")
+#julia> include("parallelExample") #sometimes need to run twice
 #julia> model_eval = runExample()
 #julia> plotEvalModel(model_eval)
 
 
-LinearSVC = begin
+@everywhere LinearSVC = begin
   @pyimport sklearn.svm as svm
   svm.LinearSVC
 end
 
 
-iris = dataset("datasets", "iris");
-iris[:SpeciesInt] = encodeCategorical(iris[:Species])
+@everywhere iris = dataset("datasets", "iris");
+@everywhere iris[:SpeciesInt] = encodeCategorical(iris[:Species])
 
-predictor_cols = names(iris)[1:4]
+@everywhere predictor_cols = names(iris)[1:4]
 
 #make shared array to facilitate parallel processing
 
@@ -37,7 +37,7 @@ X_data, y_data, X_validation, y_validation = begin
 end
 
 
-function pipelineGen(X, y)
+@everywhere function pipelineGen(X, y)
   #dictionary to hold model state during processing
   #updated over range of Cs by evalModel, will be clear shortly
   model_state = Dict(:svc_C => 1.)
